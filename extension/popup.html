@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhishGuard</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <svg class="shield-icon" width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L3 7V12C3 17.5228 6.83984 22.4286 12 24C17.1602 22.4286 21 17.5228 21 12V7L12 2Z" fill="#1a56db"/>
+          <path d="M9 12L11 14L15 10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="brand-name">Phish<span class="brand-accent">Guard</span></span>
+      </div>
+      <div class="status-indicator" id="backend-status" title="Backend Status: Connected">
+        <span class="dot"></span>
+      </div>
+    </header>
+
+    <!-- Target site card -->
+    <div class="site-card">
+      <div class="card-label">CURRENT URL</div>
+      <div class="url-display">
+        <span class="url-icon">🌐</span>
+        <span class="url-text" id="target-url">Loading active tab…</span>
+      </div>
+    </div>
+
+    <!-- Main Content States -->
+    <main class="content">
+      <!-- IDLE STATE -->
+      <div id="state-idle" class="state-panel">
+        <div class="state-icon-box">
+          <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#1a56db" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+        <p class="state-title">Ready to Scan</p>
+        <p class="state-desc">Analyze this page for phishing, malicious redirects, and lookalike domains.</p>
+        <button id="btn-scan" class="btn btn-primary">Scan Active Tab</button>
+      </div>
+
+      <!-- SCANNING STATE -->
+      <div id="state-scanning" class="state-panel hidden">
+        <div class="spinner-container">
+          <div class="spinner-ring"></div>
+        </div>
+        <p class="state-title">Analyzing Safety…</p>
+        <div class="scan-steps">
+          <div class="scan-step active" id="step-1">
+            <span class="step-dot"></span> Extracting URL features
+          </div>
+          <div class="scan-step" id="step-2">
+            <span class="step-dot"></span> Checking threat reputation
+          </div>
+          <div class="scan-step" id="step-3">
+            <span class="step-dot"></span> Inspecting domain & SSL
+          </div>
+        </div>
+      </div>
+
+      <!-- RESULT STATE -->
+      <div id="state-result" class="state-panel hidden">
+        <div id="verdict-banner" class="verdict-banner safe">
+          <div class="verdict-top">
+            <span id="verdict-badge" class="verdict-badge safe">● SAFE</span>
+            <div class="score-display">
+              <span id="score-val" class="score-number">4</span>
+              <span class="score-label">/100</span>
+            </div>
+          </div>
+          <p id="verdict-summary" class="verdict-summary">This website appears legitimate and safe to browse.</p>
+        </div>
+
+        <!-- Meter bar -->
+        <div class="meter-container">
+          <div class="meter-labels">
+            <span>Risk Level</span>
+            <span id="meter-score-text">Low Risk</span>
+          </div>
+          <div class="meter-track">
+            <div id="meter-fill" class="meter-fill safe" style="width: 4%"></div>
+          </div>
+        </div>
+
+        <!-- Threat Indicators (if any) -->
+        <div id="threat-section" class="threat-section hidden">
+          <div class="threat-title">KEY SIGNALS</div>
+          <div id="threat-list" class="threat-list"></div>
+        </div>
+
+        <button id="btn-view-report" class="btn btn-primary">View Full Report →</button>
+        <button id="btn-rescan" class="btn btn-subtle">Rescan Page</button>
+      </div>
+
+      <!-- ERROR STATE -->
+      <div id="state-error" class="state-panel hidden">
+        <div class="state-icon-box error">⚠️</div>
+        <p class="state-title">Unable to Scan</p>
+        <p id="error-message" class="state-desc">Backend connection error. Please ensure the PhishGuard backend is running.</p>
+        <button id="btn-retry" class="btn btn-primary">Try Again</button>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span>PhishGuard Multi-Layer Detection</span>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

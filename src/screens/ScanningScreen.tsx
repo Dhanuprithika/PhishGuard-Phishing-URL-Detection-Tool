@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import type { ScanResult } from "../types";
+import { scanUrl } from "../services/api";
 
 interface ScanningScreenProps {
   url: string;
-  onComplete: () => void;
+  onComplete: (result: ScanResult) => void;
 }
 
 const CHECKS = [
@@ -16,24 +18,56 @@ const CHECKS = [
 export default function ScanningScreen({ url, onComplete }: ScanningScreenProps) {
   const [completedCount, setCompletedCount] = useState(0);
   const [currentDetail, setCurrentDetail] = useState(CHECKS[0].detail);
+  const scanResultRef = useRef<ScanResult | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
+    // Trigger real backend scan
+    scanUrl(url)
+      .then((res) => {
+        if (isMounted) {
+          scanResultRef.current = res;
+        }
+      })
+      .catch((err) => {
+        console.error("Scan error:", err);
+      });
+
     const timers: ReturnType<typeof setTimeout>[] = [];
     CHECKS.forEach((check, i) => {
       timers.push(
         setTimeout(() => {
-          setCompletedCount(i + 1);
-          setCurrentDetail(CHECKS[Math.min(i + 1, CHECKS.length - 1)].detail);
-        }, 450 + i * 380)
+          if (isMounted) {
+            setCompletedCount(i + 1);
+            setCurrentDetail(CHECKS[Math.min(i + 1, CHECKS.length - 1)].detail);
+          }
+        }, 400 + i * 320)
       );
     });
+
+    // Complete scan after minimum visual animation steps
+    const minTime = 400 + CHECKS.length * 320 + 200;
     timers.push(
-      setTimeout(() => {
-        onComplete();
-      }, 450 + CHECKS.length * 380 + 300)
+      setTimeout(async () => {
+        if (!isMounted) return;
+        if (scanResultRef.current) {
+          onComplete(scanResultRef.current);
+        } else {
+          // If network is still pending, wait briefly or fallback
+          const finalResult = await scanUrl(url);
+          if (isMounted) {
+            onComplete(finalResult);
+          }
+        }
+      }, minTime)
     );
-    return () => timers.forEach(clearTimeout);
-  }, [onComplete]);
+
+    return () => {
+      isMounted = false;
+      timers.forEach(clearTimeout);
+    };
+  }, [url, onComplete]);
 
   const truncated = url.length > 60 ? url.slice(0, 60) + "…" : url;
 
