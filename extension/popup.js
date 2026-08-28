@@ -119,13 +119,33 @@ function renderResult(result) {
     meterScoreText.textContent = "High Risk";
   }
 
-  verdictSummary.textContent = result.explanation || "Scan completed.";
+  // Threat Analyst AI Agent output
+  const analystData = result.threatAnalysis || result.threat_analysis;
+  const analystExplanationEl = document.getElementById("analyst-explanation");
+  const recTextEl = document.getElementById("rec-text");
 
-  // Render threats if present
-  if (result.indicators && result.indicators.length > 0 && verdict !== "safe") {
+  if (analystData) {
+    if (analystExplanationEl) {
+      analystExplanationEl.textContent = analystData.explanation || analystData.summary || result.explanation;
+    }
+    if (recTextEl) {
+      recTextEl.textContent = analystData.recommendation || result.recommendation;
+    }
+  } else {
+    if (analystExplanationEl) {
+      analystExplanationEl.textContent = result.explanation || "Analysis complete.";
+    }
+    if (recTextEl) {
+      recTextEl.textContent = result.recommendation || "Stay vigilant online.";
+    }
+  }
+
+  // Render threats / reasons
+  const reasonsList = analystData?.reasons || result.indicators || [];
+  if (reasonsList && reasonsList.length > 0 && verdict !== "safe") {
     threatSection.classList.remove("hidden");
     threatList.innerHTML = "";
-    result.indicators.slice(0, 3).forEach((ind) => {
+    reasonsList.slice(0, 3).forEach((ind) => {
       const item = document.createElement("div");
       item.className = "threat-item";
       item.textContent = `• ${ind}`;

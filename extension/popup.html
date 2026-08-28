@@ -59,13 +59,14 @@
             <span class="step-dot"></span> Checking threat reputation
           </div>
           <div class="scan-step" id="step-3">
-            <span class="step-dot"></span> Inspecting domain & SSL
+            <span class="step-dot"></span> Running Threat Analyst Agent
           </div>
         </div>
       </div>
 
       <!-- RESULT STATE -->
       <div id="state-result" class="state-panel hidden">
+        <!-- Verdict Banner -->
         <div id="verdict-banner" class="verdict-banner safe">
           <div class="verdict-top">
             <span id="verdict-badge" class="verdict-badge safe">● SAFE</span>
@@ -88,10 +89,24 @@
           </div>
         </div>
 
-        <!-- Threat Indicators (if any) -->
+        <!-- Threat Analyst Card -->
+        <div class="analyst-card">
+          <div class="analyst-header">
+            <span class="analyst-badge">🤖 Threat Analyst</span>
+          </div>
+          <p id="analyst-explanation" class="analyst-text">...</p>
+        </div>
+
+        <!-- Threat Reasons / Signals (if any) -->
         <div id="threat-section" class="threat-section hidden">
-          <div class="threat-title">KEY SIGNALS</div>
+          <div class="threat-title">KEY THREAT REASONS</div>
           <div id="threat-list" class="threat-list"></div>
+        </div>
+
+        <!-- Recommendation Box -->
+        <div class="rec-box">
+          <div class="rec-title">RECOMMENDED ACTION</div>
+          <p id="rec-text" class="rec-text">...</p>
         </div>
 
         <button id="btn-view-report" class="btn btn-primary">View Full Report →</button>
@@ -109,7 +124,7 @@
 
     <!-- Footer -->
     <footer class="footer">
-      <span>PhishGuard Multi-Layer Detection</span>
+      <span>PhishGuard Multi-Layer Threat Intelligence</span>
     </footer>
   </div>
 

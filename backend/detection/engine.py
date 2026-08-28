@@ -6,7 +6,8 @@ from .domain_intel import analyze_domain_intel
 from .reputation import check_reputation
 from .heuristics import evaluate_heuristics
 from .ml_classifier import classifier
-from ..models import ScanResponse, CheckItem
+from ..models import ScanResponse, CheckItem, ThreatAnalysis
+from ..agents.threat_analyst import threat_analyst_agent
 
 EXPLANATIONS = {
     "safe": "This URL appears legitimate. The domain has a clean reputation, uses HTTPS, and shows no signs of phishing or deceptive behavior based on our multi-layered analysis.",
@@ -86,6 +87,47 @@ def analyze_url(raw_url: str) -> ScanResponse:
         for c in checks_data
     ]
 
+    features_dict = {
+        "entropy": features.get("entropy"),
+        "url_length": features.get("url_length"),
+        "num_subdomains": features.get("num_subdomains"),
+        "is_ip": is_ip,
+        "suspicious_keywords": features.get("suspicious_keywords_found", []),
+        "ssl_issuer": ssl_info.get("issuer"),
+        "ssl_valid": ssl_info.get("valid"),
+        "dns_resolved": domain_intel.get("has_dns"),
+        "ip_addresses": domain_intel.get("ip_addresses", []),
+    }
+
+    # Execute PhishGuard Threat Analyst Agent
+    threat_analysis_obj = None
+    try:
+        raw_agent_analysis = threat_analyst_agent.analyze({
+            "url": normalized_url,
+            "verdict": verdict,
+            "risk_score": final_score,
+            "riskScore": final_score,
+            "checks": checks_data,
+            "indicators": indicators,
+            "features": features_dict,
+            "domain": domain or hostname,
+            "https": features["has_https"] and ssl_info.get("valid", False),
+            "blacklisted": reputation.get("blacklisted", False),
+            "registration_age": domain_intel.get("registration_age", "Unknown"),
+            "ml_confidence": round(ml_prob, 2),
+            "explanation": explanation,
+            "recommendation": recommendation,
+        })
+        if raw_agent_analysis:
+            threat_analysis_obj = ThreatAnalysis(
+                summary=raw_agent_analysis.get("summary", explanation),
+                reasons=raw_agent_analysis.get("reasons", indicators[:3]),
+                explanation=raw_agent_analysis.get("explanation", explanation),
+                recommendation=raw_agent_analysis.get("recommendation", recommendation),
+            )
+    except Exception as agent_err:
+        print(f"Threat analyst agent warning (gracefully recovered): {agent_err}")
+
     return ScanResponse(
         url=normalized_url,
         verdict=verdict,
@@ -101,16 +143,7 @@ def analyze_url(raw_url: str) -> ScanResponse:
         blacklisted=reputation.get("blacklisted", False),
         registrationAge=domain_intel.get("registration_age", "Unknown"),
         scannedAt=datetime.now(timezone.utc),
-        features={
-            "entropy": features.get("entropy"),
-            "url_length": features.get("url_length"),
-            "num_subdomains": features.get("num_subdomains"),
-            "is_ip": is_ip,
-            "suspicious_keywords": features.get("suspicious_keywords_found", []),
-            "ssl_issuer": ssl_info.get("issuer"),
-            "ssl_valid": ssl_info.get("valid"),
-            "dns_resolved": domain_intel.get("has_dns"),
-            "ip_addresses": domain_intel.get("ip_addresses", []),
-        },
+        threatAnalysis=threat_analysis_obj,
+        features=features_dict,
         ml_confidence=round(ml_prob, 2),
     )

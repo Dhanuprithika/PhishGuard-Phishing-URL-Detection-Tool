@@ -6,6 +6,13 @@ export interface CheckItem {
   detail?: string;
 }
 
+export interface ThreatAnalysis {
+  summary: string;
+  reasons: string[];
+  explanation: string;
+  recommendation: string;
+}
+
 export interface ScanResult {
   url: string;
   verdict: Verdict;
@@ -21,6 +28,7 @@ export interface ScanResult {
   blacklisted: boolean;
   registrationAge: string;
   scannedAt: Date;
+  threatAnalysis?: ThreatAnalysis;
 }
 
 export type AppScreen =

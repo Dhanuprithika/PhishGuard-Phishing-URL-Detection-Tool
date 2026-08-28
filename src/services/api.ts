@@ -41,6 +41,7 @@ export async function scanUrl(url: string): Promise<ScanResult> {
       blacklisted: data.blacklisted ?? false,
       registrationAge: data.registrationAge || data.registration_age || "Unknown",
       scannedAt: data.scannedAt ? new Date(data.scannedAt) : new Date(),
+      threatAnalysis: data.threatAnalysis || data.threat_analysis || undefined,
     };
   } catch (error) {
     console.warn("Backend API unavailable or error occurred, using client heuristic engine:", error);

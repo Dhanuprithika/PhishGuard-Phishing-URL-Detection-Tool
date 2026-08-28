@@ -50,6 +50,12 @@ class ReputationInfo(BaseModel):
     ip_reputation: Literal["clean", "flagged", "unknown"] = "clean"
     known_threat: bool = False
 
+class ThreatAnalysis(BaseModel):
+    summary: str
+    reasons: List[str]
+    explanation: str
+    recommendation: str
+
 class ScanRequest(BaseModel):
     url: str
 
@@ -69,6 +75,9 @@ class ScanResponse(BaseModel):
     registration_age: str = Field(..., alias="registrationAge")
     scanned_at: datetime = Field(default_factory=datetime.utcnow, alias="scannedAt")
     
+    # Threat Analyst AI Agent output
+    threat_analysis: Optional[ThreatAnalysis] = Field(default=None, alias="threatAnalysis")
+
     # Detailed technical fields for deep analysis
     features: Optional[Dict[str, Any]] = None
     ml_confidence: Optional[float] = None
