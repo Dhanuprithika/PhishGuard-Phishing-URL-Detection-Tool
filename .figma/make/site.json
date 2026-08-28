@@ -1,0 +1,10 @@
+{
+  "description": "PhishGuard is a premium phishing URL detection tool that analyzes links for safety, providing users with risk scores and detailed threat explanations.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
