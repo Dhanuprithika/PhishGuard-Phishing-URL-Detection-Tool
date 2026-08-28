@@ -1,5 +1,6 @@
 const BACKEND_URL = "http://127.0.0.1:8000/api/scan";
-const WEBAPP_URL = "http://localhost:5173"; // Or Vite port 8443
+// Vite development server runs on 8443 (default) or 5173
+const WEBAPP_URL = "http://localhost:8443";
 
 let currentUrl = "";
 let latestResult = null;
@@ -47,15 +48,20 @@ async function initTab() {
         currentUrl = tab.url;
         targetUrlEl.textContent = currentUrl;
 
-        // Ignore internal chrome/edge pages
-        if (currentUrl.startsWith("chrome://") || currentUrl.startsWith("edge://") || currentUrl.startsWith("about:")) {
+        // Ignore internal browser system pages
+        if (
+          currentUrl.startsWith("chrome://") ||
+          currentUrl.startsWith("edge://") ||
+          currentUrl.startsWith("about:") ||
+          currentUrl.startsWith("chrome-extension://")
+        ) {
           targetUrlEl.textContent = "Browser system page (Skipped)";
           showState("idle");
-          btnScan.disabled = true;
+          if (btnScan) btnScan.disabled = true;
           return;
         }
 
-        // Automatically trigger scan for quick real-time protection
+        // Automatically trigger real-time scan for seamless protection
         startScan(currentUrl);
         return;
       }
@@ -65,7 +71,7 @@ async function initTab() {
   }
 
   // Fallback demo URL if opened outside standard extension tab context
-  currentUrl = "https://github.com";
+  currentUrl = "https://google.com";
   targetUrlEl.textContent = currentUrl;
   showState("idle");
 }
@@ -74,31 +80,38 @@ async function startScan(urlToScan) {
   showState("scanning");
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
     const response = await fetch(BACKEND_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: urlToScan }),
+      signal: controller.signal,
     });
 
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
-      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || `Server returned ${response.status}: ${response.statusText}`);
     }
 
     const data = await response.json();
     latestResult = data;
     renderResult(data);
   } catch (error) {
-    console.error("Scan failed:", error);
-    errorMessageEl.textContent = `Could not reach PhishGuard API. Please ensure the backend server is running on http://127.0.0.1:8000.`;
+    console.error("PhishGuard scan failed:", error);
+    errorMessageEl.textContent = `Could not reach PhishGuard API at ${BACKEND_URL}. Please ensure the FastAPI backend is running.`;
     showState("error");
   }
 }
 
 function renderResult(result) {
-  const score = result.riskScore !== undefined ? result.riskScore : result.risk_score;
+  const score = result.riskScore !== undefined ? result.riskScore : (result.risk_score !== undefined ? result.risk_score : 0);
   const verdict = result.verdict || "safe";
 
-  // Banner classes
+  // Verdict banner & meter styling
   verdictBanner.className = `verdict-banner ${verdict}`;
   meterFill.className = `meter-fill ${verdict}`;
   meterFill.style.width = `${Math.max(4, score)}%`;
@@ -124,6 +137,8 @@ function renderResult(result) {
   const analystExplanationEl = document.getElementById("analyst-explanation");
   const recTextEl = document.getElementById("rec-text");
 
+  verdictSummary.textContent = analystData?.summary || result.explanation || "Scan completed.";
+
   if (analystData) {
     if (analystExplanationEl) {
       analystExplanationEl.textContent = analystData.explanation || analystData.summary || result.explanation;
@@ -133,7 +148,7 @@ function renderResult(result) {
     }
   } else {
     if (analystExplanationEl) {
-      analystExplanationEl.textContent = result.explanation || "Analysis complete.";
+      analystExplanationEl.textContent = result.explanation || "Safety analysis complete.";
     }
     if (recTextEl) {
       recTextEl.textContent = result.recommendation || "Stay vigilant online.";
@@ -141,7 +156,10 @@ function renderResult(result) {
   }
 
   // Render threats / reasons
-  const reasonsList = analystData?.reasons || result.indicators || [];
+  const reasonsList = (analystData?.reasons && analystData.reasons.length > 0)
+    ? analystData.reasons
+    : (result.indicators || []);
+
   if (reasonsList && reasonsList.length > 0 && verdict !== "safe") {
     threatSection.classList.remove("hidden");
     threatList.innerHTML = "";
