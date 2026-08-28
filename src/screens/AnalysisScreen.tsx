@@ -157,6 +157,41 @@ export default function AnalysisScreen({ result, onBack, onScanAnother }: Analys
             </div>
           </Section>
 
+          {/* Threat Analyst AI Assessment */}
+          {result.threatAnalysis && (
+            <Section title="Threat Analyst AI Assessment">
+              <div className="py-4 space-y-3">
+                <div>
+                  <h3 className="text-xs font-mono font-600 uppercase tracking-wider text-[var(--muted-foreground)] mb-1">
+                    Threat Summary
+                  </h3>
+                  <p className="text-sm font-medium text-[var(--foreground)]">{result.threatAnalysis.summary}</p>
+                </div>
+                <div>
+                  <h3 className="text-xs font-mono font-600 uppercase tracking-wider text-[var(--muted-foreground)] mb-1">
+                    Plain-Language Explanation
+                  </h3>
+                  <p className="text-sm text-[var(--foreground)] leading-relaxed">{result.threatAnalysis.explanation}</p>
+                </div>
+                {result.threatAnalysis.reasons.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-mono font-600 uppercase tracking-wider text-[var(--muted-foreground)] mb-1.5">
+                      Key Analysis Signals
+                    </h3>
+                    <div className="space-y-1.5">
+                      {result.threatAnalysis.reasons.map((r, i) => (
+                        <div key={i} className="flex items-start gap-2 text-xs text-[var(--foreground)] bg-[var(--muted)] rounded-lg p-2 font-mono">
+                          <span className="text-[var(--primary)] font-bold">•</span>
+                          <span>{r}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Section>
+          )}
+
           {/* Plain-language explanation */}
           <div className={`rounded-2xl border p-5 ${
             result.verdict === "phishing"
@@ -168,7 +203,9 @@ export default function AnalysisScreen({ result, onBack, onScanAnother }: Analys
             <h2 className="text-xs font-mono font-600 uppercase tracking-widest text-[var(--muted-foreground)] mb-2">
               Our Recommendation
             </h2>
-            <p className="text-sm text-[var(--foreground)] leading-relaxed">{result.recommendation}</p>
+            <p className="text-sm text-[var(--foreground)] leading-relaxed">
+              {result.threatAnalysis?.recommendation || result.recommendation}
+            </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">

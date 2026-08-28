@@ -86,10 +86,19 @@ export default function ResultScreen({ result, onScanAnother, onViewAnalysis }: 
 
           {/* Explanation */}
           <div className="px-6 py-5 border-b border-[var(--border)]">
-            <h3 className="text-xs font-mono font-600 uppercase tracking-widest text-[var(--muted-foreground)] mb-2">
-              Analysis Summary
-            </h3>
-            <p className="text-sm text-[var(--foreground)] leading-relaxed">{result.explanation}</p>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-mono font-600 uppercase tracking-widest text-[var(--muted-foreground)]">
+                Threat Analyst Assessment
+              </h3>
+              {result.threatAnalysis && (
+                <span className="text-[10px] font-mono font-600 uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 ring-1 ring-blue-200">
+                  AI Agent Verified
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-[var(--foreground)] leading-relaxed">
+              {result.threatAnalysis?.explanation || result.explanation}
+            </p>
           </div>
 
           {/* Security checks */}
@@ -119,7 +128,10 @@ export default function ResultScreen({ result, onScanAnother, onViewAnalysis }: 
               </button>
               {showFlagged && (
                 <div className="px-6 pb-5 flex flex-col gap-3">
-                  {result.indicators.map((ind, i) => {
+                  {(result.threatAnalysis?.reasons && result.threatAnalysis.reasons.length > 0
+                    ? result.threatAnalysis.reasons
+                    : result.indicators
+                  ).map((ind, i) => {
                     const explanation = flagReasons[ind];
                     return (
                       <div
